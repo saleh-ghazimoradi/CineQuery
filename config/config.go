@@ -12,8 +12,9 @@ var (
 )
 
 type Config struct {
-	Server   Server
-	Postgres Postgres
+	Server      Server
+	Postgres    Postgres
+	Application Application
 }
 
 func NewConfig() (*Config, error) {
