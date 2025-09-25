@@ -63,9 +63,47 @@ func (m *MovieHandler) GetMovieById(w http.ResponseWriter, r *http.Request) {
 
 func (m *MovieHandler) GetMovies(w http.ResponseWriter, r *http.Request) {}
 
-func (m *MovieHandler) UpdateMovie(w http.ResponseWriter, r *http.Request) {}
+func (m *MovieHandler) UpdateMovie(w http.ResponseWriter, r *http.Request) {
+	id, err := helper.ReadIdParams(r)
+	if err != nil {
+		m.customErr.NotFoundResponse(w, r)
+		return
+	}
 
-func (m *MovieHandler) DeleteMovie(w http.ResponseWriter, r *http.Request) {}
+	var payload dto.UpdateMovie
+	if err := helper.ReadJSON(w, r, &payload); err != nil {
+		m.customErr.BadRequestResponse(w, r, err)
+		return
+	}
+
+	updatedMovie, err := m.movieService.UpdateMovie(r.Context(), id, &payload)
+
+	if err := helper.WriteJSON(w, http.StatusOK, helper.Envelope{"movie": updatedMovie}, nil); err != nil {
+		m.customErr.ServerErrorResponse(w, r, err)
+	}
+}
+
+func (m *MovieHandler) DeleteMovie(w http.ResponseWriter, r *http.Request) {
+	id, err := helper.ReadIdParams(r)
+	if err != nil {
+		m.customErr.NotFoundResponse(w, r)
+		return
+	}
+
+	if err := m.movieService.DeleteMovie(r.Context(), id); err != nil {
+		switch {
+		case errors.Is(err, repository.ErrRecordNotFound):
+			m.customErr.NotFoundResponse(w, r)
+		default:
+			m.customErr.ServerErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	if err := helper.WriteJSON(w, http.StatusOK, helper.Envelope{"movie": "movie successfully deleted"}, nil); err != nil {
+		m.customErr.ServerErrorResponse(w, r, err)
+	}
+}
 
 func NewMovieHandler(customErr *helper.CustomErr, movieService service.MovieService, validator *validator.Validator) *MovieHandler {
 	return &MovieHandler{

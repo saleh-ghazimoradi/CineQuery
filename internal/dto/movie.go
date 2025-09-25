@@ -12,6 +12,13 @@ type Movie struct {
 	Genres  []string `json:"genres,omitzero"`
 }
 
+type UpdateMovie struct {
+	Title   *string  `json:"title"`
+	Year    *int32   `json:"year"`
+	Runtime *int32   `json:"runtime"`
+	Genres  []string `json:"genres"`
+}
+
 func ValidateMovie(v *validator.Validator, movie *Movie) {
 	v.Check(movie.Title != "", "title", "must be provided")
 	v.Check(len(movie.Title) <= 500, "title", "must not be more than 500 bytes long")

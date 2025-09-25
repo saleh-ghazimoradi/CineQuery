@@ -12,7 +12,7 @@ type MovieRepository interface {
 	CreateMovie(ctx context.Context, movie *domain.Movie) error
 	GetMovieById(ctx context.Context, id int64) (*domain.Movie, error)
 	GetMovies(ctx context.Context, offset, limit int32) ([]*domain.Movie, error)
-	UpdateMovie(ctx context.Context, movie *domain.Movie) error
+	UpdateMovie(ctx context.Context, movie *domain.Movie) (*domain.Movie, error)
 	DeleteMovie(ctx context.Context, id int64) error
 	WithTx(tx *sql.Tx) MovieRepository
 }
@@ -62,11 +62,53 @@ func (m *movieRepository) GetMovies(ctx context.Context, offset, limit int32) ([
 	return nil, nil
 }
 
-func (m *movieRepository) UpdateMovie(ctx context.Context, movie *domain.Movie) error {
-	return nil
+func (m *movieRepository) UpdateMovie(ctx context.Context, movie *domain.Movie) (*domain.Movie, error) {
+	query := `
+        UPDATE movies 
+        SET title = $1, year = $2, runtime = $3, genres = $4, version = version + 1
+        WHERE id = $5
+        RETURNING version`
+
+	args := []any{
+		movie.Title,
+		movie.Year,
+		movie.Runtime,
+		pq.Array(movie.Genres),
+		movie.ID,
+	}
+
+	if err := m.dbWrite.QueryRowContext(ctx, query, args...).Scan(&movie.Version); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+	return movie, nil
 }
 
 func (m *movieRepository) DeleteMovie(ctx context.Context, id int64) error {
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	query := `DELETE FROM movies WHERE id = $1`
+
+	result, err := m.dbWrite.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }
 
