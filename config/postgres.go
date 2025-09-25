@@ -7,7 +7,7 @@ type Postgres struct {
 	Port        string        `env:"POSTGRES_PORT"`
 	User        string        `env:"POSTGRES_USER"`
 	Password    string        `env:"POSTGRES_PASSWORD"`
-	DBName      string        `env:"POSTGRES_NAME"`
+	Name        string        `env:"POSTGRES_NAME"`
 	MaxOpenConn int           `env:"POSTGRES_MAX_OPEN_CONN"`
 	MaxIdleConn int           `env:"POSTGRES_MAX_IDLE_CONN"`
 	MaxIdleTime time.Duration `env:"POSTGRES_MAX_IDLE_TIME"`

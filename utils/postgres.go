@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type Postgres struct {
 	Port        string
 	User        string
 	Password    string
-	DBName      string
+	Name        string
 	MaxOpenConn int
 	MaxIdleConn int
 	MaxIdleTime time.Duration
@@ -45,9 +46,9 @@ func WithPassword(password string) Option {
 	}
 }
 
-func WithDBName(dbName string) Option {
+func WithName(name string) Option {
 	return func(p *Postgres) {
-		p.DBName = dbName
+		p.Name = name
 	}
 }
 
@@ -76,7 +77,7 @@ func WithSSLMode(mode string) Option {
 }
 
 func (p *Postgres) URI() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", p.Host, p.Port, p.User, p.Password, p.DBName, p.SSLMode)
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", p.Host, p.Port, p.User, p.Password, p.Name, p.SSLMode)
 }
 
 func (p *Postgres) Connect() (*sql.DB, error) {

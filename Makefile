@@ -12,3 +12,9 @@ vet:
 
 http: fmt vet
 	go run . http
+
+migrateUp:
+	go run . migrateUp
+
+migrateDown:
+	go run . migrateDown
