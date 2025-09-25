@@ -5,7 +5,6 @@ import (
 	"github.com/saleh-ghazimoradi/CineQuery/internal/domain"
 	"github.com/saleh-ghazimoradi/CineQuery/internal/dto"
 	"github.com/saleh-ghazimoradi/CineQuery/internal/repository"
-	"github.com/saleh-ghazimoradi/CineQuery/internal/validator"
 )
 
 type MovieService interface {
@@ -18,15 +17,23 @@ type MovieService interface {
 
 type movieService struct {
 	movieRepository repository.MovieRepository
-	validator       *validator.Validator
 }
 
 func (m *movieService) CreateMovie(ctx context.Context, input *dto.Movie) (*domain.Movie, error) {
-	return nil, nil
+	movie := &domain.Movie{
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: input.Runtime,
+		Genres:  input.Genres,
+	}
+	if err := m.movieRepository.CreateMovie(ctx, movie); err != nil {
+		return nil, err
+	}
+	return movie, nil
 }
 
 func (m *movieService) GetMovieById(ctx context.Context, id int64) (*domain.Movie, error) {
-	return nil, nil
+	return m.movieRepository.GetMovieById(ctx, id)
 }
 
 func (m *movieService) GetMovies(ctx context.Context, offset, limit int32) ([]*domain.Movie, error) {
@@ -41,9 +48,8 @@ func (m *movieService) DeleteMovie(ctx context.Context, id int64) error {
 	return nil
 }
 
-func NewMovieService(movieRepository repository.MovieRepository, validator *validator.Validator) MovieService {
+func NewMovieService(movieRepository repository.MovieRepository) MovieService {
 	return &movieService{
 		movieRepository: movieRepository,
-		validator:       validator,
 	}
 }

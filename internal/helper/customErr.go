@@ -47,8 +47,8 @@ func (c *CustomErr) BadRequestResponse(w http.ResponseWriter, r *http.Request, e
 	c.ErrorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
-func (c *CustomErr) FailedValidationResponse(w http.ResponseWriter, r *http.Request, err error) {
-	c.ErrorResponse(w, r, http.StatusUnprocessableEntity, err.Error())
+func (c *CustomErr) FailedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	c.ErrorResponse(w, r, http.StatusUnprocessableEntity, errors)
 }
 
 func NewCustomErr() *CustomErr {

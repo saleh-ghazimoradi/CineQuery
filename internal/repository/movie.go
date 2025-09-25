@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"github.com/lib/pq"
 	"github.com/saleh-ghazimoradi/CineQuery/internal/domain"
 )
 
@@ -22,11 +24,38 @@ type movieRepository struct {
 }
 
 func (m *movieRepository) CreateMovie(ctx context.Context, movie *domain.Movie) error {
-	return nil
+	query := `INSERT INTO movies (title, year, runtime, genres) VALUES ($1, $2, $3, $4) RETURNING id, created_at, version`
+	args := []any{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+	return m.dbWrite.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 func (m *movieRepository) GetMovieById(ctx context.Context, id int64) (*domain.Movie, error) {
-	return nil, nil
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	query := `SELECT id, created_at, title, year, runtime, genres, version FROM movies WHERE id = $1`
+
+	var movie domain.Movie
+
+	if err := m.dbRead.QueryRowContext(ctx, query, id).Scan(
+		&movie.ID,
+		&movie.CreatedAt,
+		&movie.Title,
+		&movie.Year,
+		&movie.Runtime,
+		pq.Array(&movie.Genres),
+		&movie.Version,
+	); err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &movie, nil
 }
 
 func (m *movieRepository) GetMovies(ctx context.Context, offset, limit int32) ([]*domain.Movie, error) {
